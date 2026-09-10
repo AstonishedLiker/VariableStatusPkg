@@ -361,21 +361,18 @@ UefiMain (
   if (EFI_ERROR (Status) || (ShellParameters == NULL)) {
     Print (L"Unable to obtain shell parameters: %r\n", Status);
     goto Usage;
-    return EFI_INVALID_PARAMETER;
   }
 
   if (ShellParameters->Argc != 3) {
     Print (L"Invalid number of arguments.\n\n");
     goto Usage;
-
-    return EFI_INVALID_PARAMETER;
   }
 
   VariableName = ShellParameters->Argv[1];
 
   if ((VariableName == NULL) || (VariableName[0] == L'\0')) {
     Print (L"Variable name cannot be empty.\n");
-    return EFI_INVALID_PARAMETER;
+    goto Usage;
   }
 
   //
@@ -392,7 +389,7 @@ UefiMain (
       ShellParameters->Argv[2],
       Status
       );
-    return EFI_INVALID_PARAMETER;
+    goto Usage;
   }
 
   Print (
