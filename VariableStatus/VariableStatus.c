@@ -265,7 +265,7 @@ WriteProbe (
     Print (
       L"Write probe: variable is LOCKED #1 (EFI_SECURITY_VIOLATION).\n"
       );
-  if (Status == EFI_WRITE_PROTECTED) {
+  } else if (Status == EFI_WRITE_PROTECTED) {
     Print (
       L"Write probe: variable is LOCKED #2 (EFI_WRITE_PROTECTED).\n"
       );
