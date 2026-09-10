@@ -72,17 +72,36 @@ jobs:
           echo "toolchain=${{ inputs.toolchain || env.DEFAULT_TOOLCHAIN }}" >> "$GITHUB_OUTPUT"
           echo "edk2_tag=${{ inputs.edk2_release_tag || env.DEFAULT_EDK2_TAG }}" >> "$GITHUB_OUTPUT"
 
+      - name: Cache EDK2 clone with submodules
+        id: cache-edk2
+        uses: actions/cache@v4
+        with:
+          path: edk2
+          key: edk2-${{ steps.params.outputs.edk2_tag }}-${{ runner.os }}
+
       - name: Clone EDK2 at release tag
+        if: steps.cache-edk2.outputs.cache-hit != 'true'
         run: |
           git clone --depth 1 --branch "${{ steps.params.outputs.edk2_tag }}" https://github.com/tianocore/edk2.git
+          cd edk2
+          git submodule update --init --recursive --depth 1
 
       - name: Install build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential uuid-dev iasl nasm python3 python3-setuptools
 
+      - name: Cache BaseTools build
+        uses: actions/cache@v4
+        with:
+          path: |
+            edk2/BaseTools/Source/C/bin
+            edk2/BaseTools/Source/C/*/OUTPUT
+          key: basetools-${{ steps.params.outputs.edk2_tag }}-${{ runner.os }}-${{ hashFiles('edk2/BaseTools/Source/C/**') }}
+
       - name: Copy driver into EDK2 tree
         run: |
+          rm -rf edk2/${{ env.PACKAGE_NAME }}
           cp -r driver-src edk2/${{ env.PACKAGE_NAME }}
 
       - name: Set up EDK2 environment
