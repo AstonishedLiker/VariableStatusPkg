@@ -1,0 +1,26 @@
+[Defines]
+  INF_VERSION                     = 1.25
+  BASE_NAME                       = VariableStatus
+  FILE_GUID                       = 858CC27B-B69B-4F30-B185-E22B181B86D4
+  MODULE_TYPE                     = UEFI_APPLICATION
+  VERSION_STRING                  = 1.0
+  ENTRY_POINT                     = UefiMain
+
+[Sources]
+  VariableStatus.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[Protocols]
+  gEfiShellParametersProtocolGuid
+  gEdkiiVariablePolicyProtocolGuid
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  UefiLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  MemoryAllocationLib
+  BaseMemoryLib
