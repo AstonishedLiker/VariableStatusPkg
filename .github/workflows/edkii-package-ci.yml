@@ -40,10 +40,20 @@ on:
         required: true
         default: 'edk2-stable202608'
         type: string
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
 
 env:
   PACKAGE_NAME: VariableStatusPkg
   DSC_NAME: VariableStatusPkg
+  DEFAULT_ARCH: X64
+  DEFAULT_RELEASE_TYPE: RELEASE
+  DEFAULT_TOOLCHAIN: GCC
+  DEFAULT_EDK2_TAG: edk2-stable202608
 
 jobs:
   build:
@@ -54,14 +64,22 @@ jobs:
         with:
           path: driver-src
 
+      - name: Resolve build parameters
+        id: params
+        run: |
+          echo "arch=${{ inputs.arch || env.DEFAULT_ARCH }}" >> "$GITHUB_OUTPUT"
+          echo "release_type=${{ inputs.release_type || env.DEFAULT_RELEASE_TYPE }}" >> "$GITHUB_OUTPUT"
+          echo "toolchain=${{ inputs.toolchain || env.DEFAULT_TOOLCHAIN }}" >> "$GITHUB_OUTPUT"
+          echo "edk2_tag=${{ inputs.edk2_release_tag || env.DEFAULT_EDK2_TAG }}" >> "$GITHUB_OUTPUT"
+
       - name: Clone EDK2 at release tag
         run: |
-          git clone --depth 1 --branch "${{ inputs.edk2_release_tag }}" https://github.com/tianocore/edk2.git
+          git clone --depth 1 --branch "${{ steps.params.outputs.edk2_tag }}" https://github.com/tianocore/edk2.git
 
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential uuid-dev iasl nasm python3 python3-distutils
+          sudo apt-get install -y build-essential uuid-dev iasl nasm python3 python3-setuptools
 
       - name: Copy driver into EDK2 tree
         run: |
@@ -77,10 +95,10 @@ jobs:
         working-directory: edk2
         run: |
           source edksetup.sh BaseTools
-          build -p ${{ env.PACKAGE_NAME }}/${{ env.DSC_NAME }}.dsc -a ${{ inputs.arch }} -t ${{ inputs.toolchain }} -b ${{ inputs.release_type }}
+          build -p ${{ env.PACKAGE_NAME }}/${{ env.DSC_NAME }}.dsc -a ${{ steps.params.outputs.arch }} -t ${{ steps.params.outputs.toolchain }} -b ${{ steps.params.outputs.release_type }}
 
       - name: Upload build output
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PACKAGE_NAME }}-${{ inputs.arch }}-${{ inputs.release_type }}-${{ inputs.toolchain }}
-          path: edk2/Build/${{ env.DSC_NAME }}/${{ inputs.release_type }}_${{ inputs.toolchain }}/${{ inputs.arch }}/*.efi
+          name: ${{ env.PACKAGE_NAME }}-${{ steps.params.outputs.arch }}-${{ steps.params.outputs.release_type }}-${{ steps.params.outputs.toolchain }}
+          path: edk2/Build/${{ env.DSC_NAME }}/${{ steps.params.outputs.release_type }}_${{ steps.params.outputs.toolchain }}/${{ steps.params.outputs.arch }}/*.efi
